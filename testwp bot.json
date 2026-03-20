@@ -1,0 +1,725 @@
+{
+  "name": "testwp bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "atolyeizmir",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -688,
+        -32
+      ],
+      "id": "922d5727-bad1-404e-beec-d74c590eecad",
+      "name": "Webhook",
+      "webhookId": "1d30b71e-61e4-4269-b97a-33ded39bf299"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "60bf1e5a-c1d8-46bd-9d56-6ad91e0d8102",
+                    "leftValue": "={{ $json.body.data.message.hasOwnProperty('audioMessage') }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Voice"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.data.message.hasOwnProperty('conversation') }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "id": "0ab424ab-6f73-4aa0-883d-68822d75eaf4"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        -48
+      ],
+      "id": "c255e80d-f576-4639-80ac-93c7e04fd997",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9cbdc9c0-c957-4d95-a596-88b6b8d85f2f",
+              "name": "text",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        336,
+        80
+      ],
+      "id": "0c1349a5-c446-4bdd-abdc-0c4bf99701ec",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "resource": "chat-api",
+        "operation": "get-media-base64",
+        "instanceName": "testwp",
+        "messageId": "={{ $json.body.data.key.id }}"
+      },
+      "type": "n8n-nodes-evolution-api-en.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        336,
+        -128
+      ],
+      "id": "d4ede6f0-7f8c-4725-9b42-e0079418856b",
+      "name": "Get media in base64",
+      "credentials": {
+        "evolutionApi": {
+          "id": "Igdk9GjlbiZwzsTk",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {
+          "language": "tr"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        848,
+        -128
+      ],
+      "id": "ca7ce2bd-e46d-42b7-a90a-48ad34b5f319",
+      "name": "Transcribe a recording",
+      "credentials": {
+        "openAiApi": {
+          "id": "vkkSoR6OdLrUDrzQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "data.base64",
+        "options": {
+          "fileName": "ses.ogg",
+          "mimeType": "audio/ogg"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        -128
+      ],
+      "id": "5474e04d-2ff2-4f37-b688-ae6c1a810b1b",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "# ROL: ATÖLYE İZMİR RESMİ EĞİTİM DANIŞMANI\nSen Atölye İzmir adına hizmet veren, moda ve tasarım dünyasına tutkulu, profesyonel bir eğitim danışmanısın.\n\n---\n\n## 🛠 TEMEL ÇALIŞMA PRENSİPLERİ\n1. **Görünmez Veri Kontrolü:** Her soruda mutlaka \"Vector Store\" aracını kullan. Ancak kullanıcıya asla \"veritabanına bakıyorum\" veya \"sistemden öğrendim\" deme. Bilgiyi doğal bir uzmanlık gibi sun.\n2. **Doğruluk:** Sadece Vector Store'dan gelen datayı kullan. Bilgi yoksa uydurma; şu numaraya yönlendir: 0541 850 81 37.\n3. **Gizlilik:** \"n8n\", \"OpenAI\", \"Vector Store\" gibi teknik terimlerden asla bahsetme. Sen sadece bir insansın.\n\n---\n\n## ✍️ ÜSLUP VE DAVRANIŞ\n- **Tonlama:** Sıcak, samimi ve motive edici ol.\n- **Netlik:** Cevaplarını kısa ve öz tut, gereksiz laf kalabalığından kaçın.\n- **Dil:** Sadece Türkçe konuş.\n- **Emoji:** Her mesajın sonuna mutlaka 1 tane ilgili emoji ekle.\n\n---\n\n## 🎓 ÖZEL KONULAR VE YÖNLENDİRME\n- **Sertifika:** Eğitimlerimizin MEB onaylı ve E-Devlet sertifikalı olduğunu gururla belirt.\n- **Kayıt Teşviği:** Fiyat veya kayıt soran herkese şu metni ekle:\n  > \"Kayıt ve detaylı bilgi için 0541 850 81 37 numaralı WhatsApp hattımızdan veya atolyeizmir.com/onkayit-formu adresinden bize ulaşabilirsiniz.\"\n\n---\n\n## 🚫 SINIRLAR\n- Atölye İzmir dışındaki kurumlar hakkında yorum yapma.\n- Fiyatlarda pazarlık kabul etme; fiyatlarımız sabittir.\n- Tasarım ve moda dışındaki genel sohbetlere girme.\n\n# KRİTİK KURAL\nKullanıcı \"merhaba\", \"selam\" gibi basit selamlaşmalar dışında NE SORARSA SORSUN (kurslar, fiyatlar, adres vb.), cevabı oluşturmadan önce MUTLAKA \"Postgres PGVector Store\" aracını çalıştır ve oradaki güncel bilgiyi kontrol et. Kendi hafızandaki genel bilgilerle cevap verme, sadece bu araçtan gelen bilgiyi kullan."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1200,
+        80
+      ],
+      "id": "31df23af-7ed6-4aa1-b247-1268a3339d79",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1008,
+        400
+      ],
+      "id": "36ffafc6-8243-4a22-84a9-8cbc0bea2f09",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "vkkSoR6OdLrUDrzQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1456,
+        624
+      ],
+      "id": "c0eaf50d-d1c6-4f9d-8e2e-4242a31aaf11",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "vkkSoR6OdLrUDrzQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "atolyeizmir",
+        "remoteJid": "={{ $('Webhook').item.json.body.data.key.remoteJid }}",
+        "messageText": "={{ $json.output }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api-en.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        80
+      ],
+      "id": "16059ce2-1dd9-4d2f-84ed-b57e7c592051",
+      "name": "Send text",
+      "credentials": {
+        "evolutionApi": {
+          "id": "Igdk9GjlbiZwzsTk",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "88a5735d-6db5-4b2f-870a-284c72d539d7",
+              "name": "client_id",
+              "value": "atolyeizmir",
+              "type": "string"
+            },
+            {
+              "id": "cbf4f251-f675-4178-a0b5-11a353ca322f",
+              "name": "session_id",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -240,
+        -48
+      ],
+      "id": "d73c0303-6f66-47c6-b162-e1c181ed0bef",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Atölye İzmir'in tüm kurs listesi, kurs içerikleri, güncel fiyatlar, eğitim tarihleri, sertifika bilgileri ve kurumla ilgili her türlü detaylı bilgi bu araçtadır. Kullanıcı kurslar, fiyatlar veya Atölye İzmir hakkında ne sorarsa sorsun, KESİNLİKLE önce bu araca bakmalısın.",
+        "tableName": "documents",
+        "options": {
+          "columnNames": {
+            "values": {
+              "contentColumnName": "content"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        1456,
+        400
+      ],
+      "id": "9b35729a-cd04-4cef-a706-d2b97f0750a9",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "H180wM422rylIYsb",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields1').item.json.session_id }}",
+        "tableName": "chat_histories",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1232,
+        400
+      ],
+      "id": "23d0ccc5-2a2c-4901-950a-8902ec6413db",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "H180wM422rylIYsb",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        656
+      ],
+      "id": "c9633581-ed27-4088-a05d-3e29b266c4b5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "documents",
+        "embeddingBatchSize": 1,
+        "options": {
+          "columnNames": {
+            "values": {
+              "contentColumnName": "content"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        656
+      ],
+      "id": "24a70a03-7ba9-444c-8a3c-595f8ebb709b",
+      "name": "Postgres PGVector Store1",
+      "credentials": {
+        "postgres": {
+          "id": "H180wM422rylIYsb",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "queryString": "'1jB6v2ubdzQjseP8u8kQpg2LCpxA_sgzy' in parents",
+        "returnAll": true,
+        "filter": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        656
+      ],
+      "id": "848e8cb2-2d7b-4f09-9d54-1c10b5f8eee7",
+      "name": "Search files and folders",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "xV9IfNO4lxsVlBQ8",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        16,
+        656
+      ],
+      "id": "b6eda0d4-7b61-4516-b8e8-99182e684e6e",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "xV9IfNO4lxsVlBQ8",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "client_id",
+                "value": "atolyeizmir"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        864
+      ],
+      "id": "21015a79-caac-4aea-8091-099712f4b0d9",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        864
+      ],
+      "id": "8331ead9-3e7e-4e36-a250-d4d85d4502f4",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "vkkSoR6OdLrUDrzQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8ede0b9d-8786-43bf-9ca9-d68fcdf0bc6d",
+              "leftValue": "={{ $json.body.data.key.remoteJid }}",
+              "rightValue": "905418508137@s.whatsapp.net",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -480,
+        -32
+      ],
+      "id": "1c5947b9-22a3-46c9-9819-d914487e7875",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get media in base64",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get media in base64": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Postgres PGVector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Postgres PGVector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "629f1007-6117-429d-9614-d62d3debe673",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68276f503df576d687421fd524813a20593969b00e9a41d830cfc4fdef23565c"
+  },
+  "id": "dn90zWnf1P3LxUv8",
+  "tags": []
+}
