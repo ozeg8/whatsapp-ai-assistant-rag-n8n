@@ -53,7 +53,7 @@
    - 🔑 OpenAI API key
    - 🔑 Evolution API key + instance name
    - 🔑 PostgreSQL connection
-   - 🔑 Google Drive OAuth
+   - 🔑 Google Drive OAuth 
 
 4. **Connect webhook**
    - Copy n8n webhook URL → paste into Evolution API settings
